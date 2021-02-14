@@ -8,10 +8,12 @@ from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import pandas as pd
-import chart_utils
+
+# TODO: Automatic import of data from the HDX API for daily updates.
+# TODO: Choropleth map visualization. 
 
 
-app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = dash.Dash(external_stylesheets=[dbc.themes.LITERA])
 
 server = app.server
 
@@ -25,24 +27,36 @@ def layout():
     There is also a dropdown that controls the type of visual, and the options are 
     populated with a list comprehension.
     """
-    chart_types = ["splom", "scatter", "density", "parallel"]
+
+    columns = [
+        'Children in Need', 
+        'IDPs', 
+        'People in Food Crisis/Emergency (IPC phase 3+)', 
+        'People Targeted for Assistance',
+        ]
+
+    navbar = dbc.NavbarSimple(
+        brand="Current Crisis Figures",
+        brand_href="#",
+        color="primary",
+        dark=True,
+    )
 
     card = dbc.Card(
         dbc.CardBody(
             [
-                html.H4("This is an app", className="card-title"),
                 html.P(
-                    "Pick a chart type to display the data. Data is refreshed on page reload.",
+                    "Select a crisis type to see up-to-date figures at a country level. This data is curated by the ReliefWeb editorial team based on its relevance to the humanitarian community.",
                     className="card-text",
                 ),
                 dbc.Select(
                     id="selector",
                     options=[
-                        {"label": chart_type, "value": i}
-                        for i, chart_type in enumerate(chart_types)
+                        {"label": column, "value": column}
+                        for column in columns
                     ],
                     value=0,
-                    placeholder="Select a chart type...",
+                    placeholder="Select a crisis...",
                 ),
                 dcc.Graph(id="graph"),
             ]
@@ -53,7 +67,12 @@ def layout():
         [card, dcc.Store(id="data-store"), dcc.Location(id="url"),], className="p-5",
     )
 
-    return items
+    page = html.Div([
+        navbar,
+        items,
+    ])
+
+    return page
 
 
 app.layout = layout()
@@ -63,38 +82,27 @@ app.layout = layout()
     Output("graph", "figure"),
     [Input("selector", "value"), Input("data-store", "data")],
 )
-def select_graph(graph_type, data):
-    # This callback provides functionality to the dropdown.
-    # When you select a chart type, the correct chart generation function is
-    # used to build that chart.
+def make_graph(crisis_type, data):
+    # So this callback is to generate the appropriate graph from the data.
+    # We're saying that whenever the source data or the user input changes,
+    # we want to update the graph. 
+    # graph_type = the option selected from the dropdown
+    # data = the data in the data-store
+
     df = pd.DataFrame(data)
-
-    chart_functions = [
-        chart_utils.generate_splom,
-        chart_utils.generate_scatter,
-        chart_utils.generate_density,
-        chart_utils.generate_parallel,
-    ]
-
-    f = chart_functions[int(graph_type)]
-
-    return f(df)
-
+    df_sel = df[df.figure_name == crisis_type]
+    df_sel = df_sel.sort_values(by='figure_value', ascending=True)
+    return px.bar(df_sel, y='crisis_name', x='figure_value', orientation='h')
 
 @app.callback(Output("data-store", "data"), [Input("url", "pathname")])
 def populate_data(pathname):
     # In this callback, you could hit an API endpoint where the data comes from.
     # If the data is coming from some API that refreshes daily, it would make sense to
     # pull from there. The data refresh could also be run as a script as part of the app.
-
     # This function is triggered on page load, and it would be wise to make this function
     # as lightweight as possible to make the page load faster.
 
-    # You could also just write a pd.read_csv() function that reads in the CSV dynamically from your
-    # file store.
-    df = px.data.iris()
-    return df.to_dict()
-
+    return pd.read_csv('data/crises-figures.csv').to_dict()
 
 if __name__ == "__main__":
     app.run_server(debug=True)

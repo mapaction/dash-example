@@ -11,6 +11,7 @@ import pandas as pd
 
 # TODO: Automatic import of data from the HDX API for daily updates.
 # TODO: Choropleth map visualization. 
+# TODO: Add date to tooltip.
 
 
 app = dash.Dash(external_stylesheets=[dbc.themes.LITERA])
@@ -33,10 +34,11 @@ def layout():
         'IDPs', 
         'People in Food Crisis/Emergency (IPC phase 3+)', 
         'People Targeted for Assistance',
+        'Schools Closed due to Insecurity'
         ]
 
     navbar = dbc.NavbarSimple(
-        brand="Current Crisis Figures",
+        brand="Global Crisis Figures",
         brand_href="#",
         color="primary",
         dark=True,
@@ -55,7 +57,7 @@ def layout():
                         {"label": column, "value": column}
                         for column in columns
                     ],
-                    value=0,
+                    value="IDPs",
                     placeholder="Select a crisis...",
                 ),
                 dcc.Graph(id="graph"),
@@ -69,7 +71,7 @@ def layout():
 
     page = html.Div([
         navbar,
-        items,
+        items
     ])
 
     return page
@@ -92,7 +94,18 @@ def make_graph(crisis_type, data):
     df = pd.DataFrame(data)
     df_sel = df[df.figure_name == crisis_type]
     df_sel = df_sel.sort_values(by='figure_value', ascending=True)
-    return px.bar(df_sel, y='crisis_name', x='figure_value', orientation='h')
+    fig = px.bar(
+        df_sel, 
+        y='crisis_name', 
+        x='figure_value', 
+        orientation='h', 
+        labels={
+            'crisis_name': 'Country',
+            'figure_value': 'Count'
+        },
+        color_discrete_sequence=['#eb5b34'],
+        template='simple_white')
+    return fig
 
 @app.callback(Output("data-store", "data"), [Input("url", "pathname")])
 def populate_data(pathname):

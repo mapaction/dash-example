@@ -8,16 +8,21 @@ from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import pandas as pd
+import json
+from urllib.request import urlopen
 
 # TODO: Automatic import of data from the HDX API for daily updates.
-# TODO: Choropleth map visualization. 
-# TODO: Add date to tooltip.
+# TODO: Figure out why choropleth is so slowww...
+# TODO: Add data upload date to graph tooltip.
 
-
+token = open(".mapbox-token").read()
 app = dash.Dash(external_stylesheets=[dbc.themes.LITERA])
 
 server = app.server
 
+
+with urlopen('https://www.geoboundaries.org/data/geoBoundariesCGAZ-3_0_0/ADM0/simplifyRatio_10/geoBoundariesCGAZ_ADM0.geojson') as response:
+    countries = json.load(response)
 
 def layout():
     """
@@ -61,6 +66,7 @@ def layout():
                     placeholder="Select a crisis...",
                 ),
                 dcc.Graph(id="graph"),
+                dcc.Graph(id="map")
             ]
         ),
     )
@@ -105,6 +111,26 @@ def make_graph(crisis_type, data):
         },
         color_discrete_sequence=['#eb5b34'],
         template='simple_white')
+    return fig
+
+@app.callback(
+    Output("map", "figure"), 
+    [Input("selector", "value"), Input("data-store", "data")])
+def display_choropleth(crisis_type, data):
+    # Creating the choropleth map with the same data as the bar chart
+
+    # TODO: Function to select the data
+    df = pd.DataFrame(data)
+    df_sel = df[df.figure_name == crisis_type]
+
+    fig = px.choropleth_mapbox(
+        df_sel, geojson=countries, color='figure_value',
+        locations="crisis_iso3", featureidkey="properties.shapeISO",
+        center={"lat": 0, "lon": 0}, zoom=1)
+    fig.update_layout(
+        margin={"r":0,"t":0,"l":0,"b":0},
+        mapbox_accesstoken=token)
+
     return fig
 
 @app.callback(Output("data-store", "data"), [Input("url", "pathname")])

@@ -12,7 +12,7 @@ import json
 from urllib.request import urlopen
 
 # TODO: Automatic import of data from the HDX API for daily updates.
-# TODO: Figure out why choropleth is so slowww...
+# TODO: Figure out why choropleth is so slowww... maybe geojson is too big?
 # TODO: Add data upload date to graph tooltip.
 
 token = open(".mapbox-token").read()
@@ -65,8 +65,12 @@ def layout():
                     value="IDPs",
                     placeholder="Select a crisis...",
                 ),
-                dcc.Graph(id="graph"),
-                dcc.Graph(id="map")
+                dbc.Row(
+                    [
+                        dbc.Col(dcc.Graph(id="graph")),
+                        dbc.Col(dcc.Graph(id="map")),
+                    ]
+                ),                
             ]
         ),
     )
@@ -117,23 +121,23 @@ def make_graph(crisis_type, data):
     Output("map", "figure"), 
     [Input("selector", "value"), Input("data-store", "data")])
 def display_choropleth(crisis_type, data):
-    # Creating the choropleth map with the same data as the bar chart
+    # Creating the choropleth map with the same data as the bar chart.
 
-    # TODO: Function to select the data
+    # TODO: Function to select the data so this doesn't have to be repeated.
     df = pd.DataFrame(data)
     df_sel = df[df.figure_name == crisis_type]
-
-    fig = px.choropleth_mapbox(
-        df_sel, geojson=countries, color='figure_value',
-        locations="crisis_iso3", featureidkey="properties.shapeISO",
-        center={"lat": 0, "lon": 0}, zoom=1)
-    fig.update_layout(
-        margin={"r":0,"t":0,"l":0,"b":0},
-        mapbox_accesstoken=token)
-
+    fig = px.choropleth(
+        df_sel, 
+        color='figure_value',
+        locations="crisis_iso3",
+        color_continuous_scale=px.colors.sequential.Redor,
+        locationmode='ISO-3',
+        projection='natural earth')
     return fig
 
-@app.callback(Output("data-store", "data"), [Input("url", "pathname")])
+@app.callback(
+    Output("data-store", "data"), 
+    [Input("url", "pathname")])
 def populate_data(pathname):
     # In this callback, you could hit an API endpoint where the data comes from.
     # If the data is coming from some API that refreshes daily, it would make sense to

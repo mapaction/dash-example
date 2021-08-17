@@ -20,7 +20,7 @@ from layout import layout
 # TODO: Automatic import of data from the HDX API for daily updates.
 # TODO: Better mapbox map
 
-token = open(".mapbox-token").read()
+# token = open(".mapbox-token").read()
 app = dash.Dash(external_stylesheets=[dbc.themes.LITERA])
 
 server = app.server

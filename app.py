@@ -1,10 +1,6 @@
 import dash
-import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
-
-# This is a third-party library that makes it easy to write responsive, well-styled apps
-# Documentation: https://dash-bootstrap-components.opensource.faculty.ai/docs/
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import pandas as pd
@@ -21,7 +17,7 @@ from layout import layout
 # TODO: Better mapbox map
 
 # token = open(".mapbox-token").read()
-app = dash.Dash(external_stylesheets=[dbc.themes.LITERA])
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.LITERA])
 
 server = app.server
 
@@ -33,8 +29,33 @@ with urlopen(
 ) as response:
     countries = json.load(response)
 
+navbar = dbc.Navbar(
+    [
+        html.A(
+            # Use row and col to control vertical alignment of logo / brand
+            dbc.Row(
+                [
+                    dbc.Col(
+                        html.Img(src=app.get_asset_url("ma_logo.png"), height="75px")
+                    ),
+                    dbc.Col(
+                        dbc.NavbarBrand(
+                            "Global Crisis Figures Dashboard",
+                        )
+                    ),
+                ],
+                align="center",
+                no_gutters=False,
+            ),
+            href="https://mapaction.org/",
+        ),
+    ],
+    color="#19458D",
+    dark=True,
+)
 
-app.layout = layout()
+
+app.layout = html.Div([navbar, layout()])
 
 
 @app.callback(

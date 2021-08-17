@@ -65,7 +65,7 @@ def layout():
         className="card-text",
     )
 
-    selector = dbc.Select(
+    selector = dcc.Dropdown(
         id="selector",
         options=[{"label": column, "value": column} for column in columns],
         value="IDPs",

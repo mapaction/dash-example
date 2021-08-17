@@ -32,21 +32,23 @@ app.layout = layout()
 
 
 @app.callback(
-    Output("graph", "figure"),
+    [
+        Output("graph", "figure"),
+        Output("map", "figure"),
+        Output("table-card", "children"),
+    ],
     [Input("selector", "value"), Input("data-store", "data")],
 )
-def make_graph(crisis_type, data):
-    # So this callback is to generate the appropriate graph from the data.
-    # We're saying that whenever the source data or the user input changes,
-    # we want to update the graph.
-    # graph_type = the option selected from the dropdown
-    # data = the data in the data-store
+def display_figs(crisis_type, data):
 
     df = pd.DataFrame(data)
-    df_sel = df[df.figure_name == crisis_type]
-    df_sel = df_sel.sort_values(by="figure_value", ascending=False).head(5)
-    fig = px.bar(
-        df_sel,
+    df_sel = df[df.figure_name == crisis_type].sort_values(
+        by="figure_value", ascending=False
+    )
+
+    # Create the bar chart
+    fig_bar = px.bar(
+        df_sel.head(5).sort_values(by="figure_value", ascending=True),
         y="crisis_name",
         x="figure_value",
         orientation="h",
@@ -55,19 +57,9 @@ def make_graph(crisis_type, data):
         template="simple_white",
         title="Top 5 crisis affected countries",
     )
-    return fig
 
-
-@app.callback(
-    Output("map", "figure"), [Input("selector", "value"), Input("data-store", "data")]
-)
-def display_choropleth(crisis_type, data):
-    # Creating the choropleth map with the same data as the bar chart.
-
-    # TODO: Function to select the data so this doesn't have to be repeated.
-    df = pd.DataFrame(data)
-    df_sel = df[df.figure_name == crisis_type]
-    fig = px.choropleth(
+    # Create the choropleth map
+    fig_map = px.choropleth(
         df_sel,
         color="figure_value",
         locations="crisis_iso3",
@@ -76,24 +68,12 @@ def display_choropleth(crisis_type, data):
         projection="natural earth",
         title="Location of affected countries",
     )
-    fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+    fig_map.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 
-    return fig
-
-
-@app.callback(
-    Output("table-card", "children"),
-    [Input("selector", "value"), Input("data-store", "data")],
-)
-def display_table(crisis_type, data):
-    # Creating the table with the sources for each country for the selected crisis.
-
-    # TODO: Function to select the data so this doesn't have to be repeated.
-    df = pd.DataFrame(data)
-    df_sel = df[df.figure_name == crisis_type][
+    # Create the table
+    df_sel_table = df_sel[
         ["crisis_name", "figure_value", "figure_source", "figure_date", "figure_url"]
-    ]
-    df_sel = df_sel.rename(
+    ].rename(
         columns={
             "crisis_name": "Country",
             "figure_value": "People affected",
@@ -102,19 +82,28 @@ def display_table(crisis_type, data):
             "figure_url": "Link",
         }
     )
-    df_sel = df_sel.sort_values(by="People affected", ascending=False)
-    return dbc.Table.from_dataframe(df_sel, striped=False, bordered=True, hover=True)
+    table = dbc.Table.from_dataframe(
+        df_sel_table, striped=False, bordered=True, hover=True
+    )
+
+    return fig_bar, fig_map, table
 
 
-@app.callback(Output("data-store", "data"), [Input("url", "pathname")])
+@app.callback(
+    [Output("data-store", "data"), Output("selector", "options")],
+    [Input("url", "pathname")],
+)
 def populate_data(pathname):
     # In this callback, you could hit an API endpoint where the data comes from.
     # If the data is coming from some API that refreshes daily, it would make sense to
     # pull from there. The data refresh could also be run as a script as part of the app.
     # This function is triggered on page load, and it would be wise to make this function
     # as lightweight as possible to make the page load faster.
+    df = pd.read_csv("data/crises-figures.csv")
+    crises = df.figure_name.unique()
+    options = [{"label": column, "value": column} for column in crises]
 
-    return pd.read_csv("data/crises-figures.csv").to_dict()
+    return df.to_dict(), options
 
 
 if __name__ == "__main__":

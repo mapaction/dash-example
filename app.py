@@ -52,10 +52,10 @@ def display_figs(crisis_type, data):
         y="crisis_name",
         x="figure_value",
         orientation="h",
-        labels={"crisis_name": "Country", "figure_value": "People"},
+        labels={"crisis_name": "Country", "figure_value": "People affected"},
         color_discrete_sequence=["#E53D2F"],
         template="simple_white",
-        title="Top 5 crisis affected countries",
+        title="Top crisis affected countries",
     )
 
     # Create the choropleth map
@@ -71,17 +71,24 @@ def display_figs(crisis_type, data):
     fig_map.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 
     # Create the table
+    df_sel.figure_source = df_sel.apply(
+        lambda x: html.A(
+            html.P(x["figure_source"]), href=x["figure_url"], target="_blank"
+        ),
+        axis=1,
+    )
+
     df_sel_table = df_sel[
-        ["crisis_name", "figure_value", "figure_source", "figure_date", "figure_url"]
+        ["crisis_name", "figure_value", "figure_source", "figure_date"]
     ].rename(
         columns={
             "crisis_name": "Country",
             "figure_value": "People affected",
             "figure_source": "Source",
             "figure_date": "Last updated",
-            "figure_url": "Link",
         }
     )
+
     table = dbc.Table.from_dataframe(
         df_sel_table, striped=False, bordered=True, hover=True
     )

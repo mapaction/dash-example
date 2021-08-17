@@ -43,7 +43,7 @@ def layout():
                 # Use row and col to control vertical alignment of logo / brand
                 dbc.Row(
                     [
-                        dbc.Col(html.Img(src="assets/ma_logo.png", height="75px")),
+                        dbc.Col(html.Img(src="/assets/ma_logo.png", height="75px")),
                         dbc.Col(
                             dbc.NavbarBrand(
                                 "Global Crisis Figures Dashboard",

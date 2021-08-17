@@ -28,6 +28,7 @@ def layout():
     populated with a list comprehension.
     """
 
+    # TODO: Load this from the options in the spreadsheet
     columns = [
         "Children in Need",
         "IDPs",

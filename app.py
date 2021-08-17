@@ -11,6 +11,7 @@ import pandas as pd
 import json
 from urllib.request import urlopen
 from layout import layout
+import plotly.graph_objects as go
 
 # TODO: Automatic import of data from the HDX API for daily updates.
 # TODO:
@@ -75,6 +76,8 @@ def display_choropleth(crisis_type, data):
         projection="natural earth",
         title="Location of affected countries",
     )
+    fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+
     return fig
 
 

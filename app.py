@@ -11,15 +11,21 @@ import pandas as pd
 import json
 from urllib.request import urlopen
 from layout import layout
-import plotly.graph_objects as go
+
+from hdx.utilities.easy_logging import setup_logging
+from hdx.hdx_configuration import Configuration
+from hdx.data.dataset import Dataset
+
 
 # TODO: Automatic import of data from the HDX API for daily updates.
-# TODO:
+# TODO: Better mapbox map
 
 token = open(".mapbox-token").read()
 app = dash.Dash(external_stylesheets=[dbc.themes.LITERA])
 
 server = app.server
+
+setup_logging()
 
 
 with urlopen(
@@ -106,6 +112,13 @@ def populate_data(pathname):
     # pull from there. The data refresh could also be run as a script as part of the app.
     # This function is triggered on page load, and it would be wise to make this function
     # as lightweight as possible to make the page load faster.
+
+    Configuration.create(
+        hdx_site="prod", user_agent="mapaction-dash-example", hdx_read_only=True
+    )
+    dataset = Dataset.read_from_hdx("reliefweb-crisis-figures")
+    print(dataset.get_dataset_date())
+
     df = pd.read_csv("data/crises-figures.csv")
     crises = df.figure_name.unique()
     options = [{"label": column, "value": column} for column in crises]

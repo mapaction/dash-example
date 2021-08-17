@@ -192,3 +192,6 @@ GitHub.sublime-settings
 
 # Mapbox token
 .mapbox-token
+
+# HDX token
+.hdx_configuration.yml

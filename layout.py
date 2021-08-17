@@ -93,6 +93,12 @@ def layout():
         ]
     )
 
+    table_text = html.P(
+        "The full dataset for the selected crisis is shown in the table below. The data source for each country is linked in the entry in the 'Source' column of the table.",
+        className="card_text",
+        style={"marginTop": "20px"},
+    )
+
     table = dbc.Card(style=card_style, id="table-card")
 
     items = dbc.Container(
@@ -100,6 +106,7 @@ def layout():
             title,
             selector,
             figures,
+            table_text,
             table,
             dcc.Store(id="data-store"),
             dcc.Location(id="url"),
